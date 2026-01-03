@@ -30,7 +30,7 @@ export function VideoPreview() {
   ) => {
     const relativeTime = time - layer.startTime;
     const opacity = layer.opacity || 1;
-    const scale = layer.scale || 1;
+    const scale = (layer.type === 'video' || layer.type === 'image') ? (layer.scale || 1) : 1;
 
     ctx.save();
     ctx.globalAlpha = opacity;
