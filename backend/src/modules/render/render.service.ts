@@ -81,7 +81,58 @@ export class RenderService {
     return this.mapToRenderJob(render);
   }
 
-  async renderVideo(
+  async processRender(renderId: string): Promise<void> {
+    const render = await this.prisma.render.findUnique({
+      where: { id: renderId },
+      include: { project: true },
+    });
+
+    if (!render) {
+      throw new Error('Render not found');
+    }
+
+    try {
+      await this.prisma.render.update({
+        where: { id: renderId },
+        data: {
+          status: 'processing',
+          startedAt: new Date(),
+          progress: 0,
+        },
+      });
+
+      const editorState = render.project.editorState as EditorState;
+      const settings = render.settings as RenderSettings;
+
+      const outputPath = await this.renderVideo(renderId, editorState, settings);
+      const outputUrl = await this.uploadVideo(outputPath, renderId);
+
+      await this.prisma.render.update({
+        where: { id: renderId },
+        data: {
+          status: 'completed',
+          progress: 100,
+          outputUrl,
+          completedAt: new Date(),
+        },
+      });
+
+      this.websocketGateway.emitComplete(renderId, outputUrl);
+      await this.cleanupTempFiles(outputPath);
+    } catch (error: any) {
+      this.logger.error(`Render ${renderId} failed: ${error.message}`, error.stack);
+      await this.prisma.render.update({
+        where: { id: renderId },
+        data: {
+          status: 'failed',
+          errorMessage: error.message,
+        },
+      });
+      this.websocketGateway.emitError(renderId, error.message);
+    }
+  }
+
+  private async renderVideo(
     renderId: string,
     editorState: EditorState,
     settings: RenderSettings,

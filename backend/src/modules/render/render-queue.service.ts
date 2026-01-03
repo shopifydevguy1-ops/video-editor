@@ -162,37 +162,8 @@ export class RenderQueueService {
 
       job.updateProgress(10);
 
-      // Call render service to process
-      const editorState = render.project.editorState as any;
-      const settings = render.settings as any;
-
-      // Actually render the video
-      const outputPath = await this.renderService.renderVideo(
-        renderId,
-        editorState,
-        settings,
-      );
-
-      // Upload to storage
-      const outputUrl = await this.renderService.uploadVideo(outputPath, renderId);
-
-      // Update as completed
-      await this.prisma.render.update({
-        where: { id: renderId },
-        data: {
-          status: 'completed',
-          progress: 100,
-          outputUrl,
-          completedAt: new Date(),
-        },
-      });
-
-      job.updateProgress(100);
-      // Emit completion via WebSocket
-      this.websocketGateway.emitComplete(renderId, outputUrl);
-
-      // Cleanup temp files
-      await this.renderService.cleanupTempFiles(outputPath);
+      // Call render service to process (handles everything)
+      await this.renderService.processRender(renderId);
     } catch (error: any) {
       this.logger.error(`Render job ${renderId} failed: ${error.message}`);
       await this.prisma.render.update({
