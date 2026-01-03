@@ -130,8 +130,8 @@ export class RenderQueueService {
     }
 
     const state = await job.getState();
-    const progressValue = await job.progress();
-    const progress = typeof progressValue === 'number' ? progressValue : 0;
+    const progressValue = job.progress;
+    const progress = typeof progressValue === 'number' ? progressValue : (typeof progressValue === 'object' && progressValue !== null ? (progressValue as any).value || 0 : 0);
 
     return {
       status: state,

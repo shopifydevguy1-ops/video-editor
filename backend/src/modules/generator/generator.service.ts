@@ -218,10 +218,11 @@ export class GeneratorService {
           editorState.resolution,
         );
         
-        layers.push({
-          id: `visual-${index}`,
-          type: scene.visualType === 'image' ? 'image' : 'video',
-          name: `Visual ${index + 1}`,
+        if (scene.visualType === 'image') {
+          layers.push({
+            id: `visual-${index}`,
+            type: 'image',
+            name: `Visual ${index + 1}`,
           startTime: currentTime,
           duration: ttsAudio.duration,
           visible: true,
