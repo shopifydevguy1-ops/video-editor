@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TTSService } from '../tts/tts.service';
 import { ProjectsService } from '../projects/projects.service';
+import { PexelsService } from '../media/pexels.service';
 import { EditorState, Layer, AspectRatio } from '@ai-video-editor/shared';
 import axios from 'axios';
 
@@ -28,6 +29,7 @@ export class GeneratorService {
     private prisma: PrismaService,
     private ttsService: TTSService,
     private projectsService: ProjectsService,
+    private pexelsService: PexelsService,
     private configService: ConfigService,
   ) {
     this.openaiApiKey = this.configService.get<string>('OPENAI_API_KEY') || '';
@@ -210,7 +212,12 @@ export class GeneratorService {
           animation: 'fade',
         });
 
-        // Add placeholder video/image layer
+        // Add video/image layer with stock footage
+        const stockVideoUrl = await this.selectStockFootage(
+          scene.keywords,
+          editorState.resolution,
+        );
+        
         layers.push({
           id: `visual-${index}`,
           type: scene.visualType === 'image' ? 'image' : 'video',
@@ -222,7 +229,7 @@ export class GeneratorService {
           opacity: 1,
           zIndex: index - 100,
           mediaId: '',
-          src: '', // Will be populated with stock footage
+          src: stockVideoUrl || '', // Stock footage URL from Pexels
           position: { x: 0, y: 0 },
           scale: 1,
           rotation: 0,
@@ -277,6 +284,43 @@ export class GeneratorService {
       .split(/\s+/)
       .filter((w) => w.length > 3);
     return words.slice(0, 5);
+  }
+
+  private async selectStockFootage(
+    keywords: string[],
+    resolution: { width: number; height: number },
+  ): Promise<string | null> {
+    try {
+      const query = keywords.join(' ');
+      const orientation =
+        resolution.width > resolution.height
+          ? 'landscape'
+          : resolution.width < resolution.height
+          ? 'portrait'
+          : 'square';
+
+      const searchResult = await this.pexelsService.searchVideos(query, {
+        perPage: 5,
+        orientation: orientation as 'landscape' | 'portrait' | 'square',
+        minDuration: 3,
+        maxDuration: 30,
+      });
+
+      if (searchResult.videos.length > 0) {
+        const selectedVideo = searchResult.videos[0];
+        const videoUrl = this.pexelsService.selectBestVideoFile(
+          selectedVideo,
+          resolution.width,
+          resolution.height,
+        );
+        return videoUrl;
+      }
+
+      return null;
+    } catch (error) {
+      this.logger.warn(`Failed to select stock footage: ${error}`);
+      return null;
+    }
   }
 }
 

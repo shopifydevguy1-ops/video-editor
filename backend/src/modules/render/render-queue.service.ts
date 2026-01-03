@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue, Worker, Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RenderService } from './render.service';
+import { RenderProgressGateway } from '../websocket/websocket.gateway';
 import { RenderJob } from '@ai-video-editor/shared';
 import Redis from 'ioredis';
 
@@ -17,6 +18,7 @@ export class RenderQueueService {
     private configService: ConfigService,
     private prisma: PrismaService,
     private renderService: RenderService,
+    private websocketGateway: RenderProgressGateway,
   ) {
     this.initializeRedis();
     this.initializeQueue();
@@ -165,7 +167,7 @@ export class RenderQueueService {
       const editorState = render.project.editorState as any;
       const settings = render.settings as any;
 
-      // Simulate progress updates
+      // Simulate progress updates with WebSocket notifications
       for (let i = 10; i <= 100; i += 10) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         job.updateProgress(i);
@@ -173,21 +175,26 @@ export class RenderQueueService {
           where: { id: renderId },
           data: { progress: i },
         });
+        // Emit WebSocket update
+        this.websocketGateway.emitProgress(renderId, i);
       }
 
       // In real implementation, this would call renderService.renderVideo()
       // For now, we'll mark as completed
+      const outputUrl = `https://storage.example.com/renders/${renderId}.mp4`;
       await this.prisma.render.update({
         where: { id: renderId },
         data: {
           status: 'completed',
           progress: 100,
-          outputUrl: `https://storage.example.com/renders/${renderId}.mp4`,
+          outputUrl,
           completedAt: new Date(),
         },
       });
 
       job.updateProgress(100);
+      // Emit completion via WebSocket
+      this.websocketGateway.emitComplete(renderId, outputUrl);
     } catch (error: any) {
       this.logger.error(`Render job ${renderId} failed: ${error.message}`);
       await this.prisma.render.update({
@@ -197,6 +204,8 @@ export class RenderQueueService {
           errorMessage: error.message,
         },
       });
+      // Emit error via WebSocket
+      this.websocketGateway.emitError(renderId, error.message);
       throw error;
     }
   }

@@ -12,6 +12,7 @@ import { MediaModule } from './modules/media/media.module';
 import { RenderModule } from './modules/render/render.module';
 import { TTSModule } from './modules/tts/tts.module';
 import { GeneratorModule } from './modules/generator/generator.module';
+import { WebSocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { GeneratorModule } from './modules/generator/generator.module';
     RenderModule,
     TTSModule,
     GeneratorModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
