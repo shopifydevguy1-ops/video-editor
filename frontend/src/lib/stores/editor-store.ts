@@ -5,12 +5,19 @@ function nanoid() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+interface HistoryState {
+  editorState: EditorState;
+  timestamp: number;
+}
+
 interface EditorStore {
   editorState: EditorState | null;
   currentTime: number;
   isPlaying: boolean;
   selectedLayerIds: string[];
-  zoom: number; // Timeline zoom level
+  zoom: number;
+  history: HistoryState[];
+  historyIndex: number;
 
   // Actions
   setEditorState: (state: EditorState) => void;
@@ -30,26 +37,30 @@ interface EditorStore {
   play: () => void;
   pause: () => void;
   togglePlay: () => void;
+
+  // History operations
+  saveToHistory: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
 }
 
-const defaultEditorState: EditorState = {
-  version: '1.0.0',
-  aspectRatio: '16:9',
-  resolution: { width: 1920, height: 1080 },
-  duration: 0,
-  fps: 30,
-  layers: [],
-  transitions: [],
-};
+const MAX_HISTORY = 50;
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
-  editorState: defaultEditorState,
+  editorState: null,
   currentTime: 0,
   isPlaying: false,
   selectedLayerIds: [],
   zoom: 1,
+  history: [],
+  historyIndex: -1,
 
-  setEditorState: (state) => set({ editorState: state }),
+  setEditorState: (state) => {
+    set({ editorState: state });
+    get().saveToHistory();
+  },
 
   setCurrentTime: (time) => {
     const { editorState } = get();
@@ -81,6 +92,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         layers: [...editorState.layers, newLayer],
       },
     });
+    get().saveToHistory();
   },
 
   removeLayer: (layerId) => {
@@ -94,6 +106,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       },
       selectedLayerIds: get().selectedLayerIds.filter((id) => id !== layerId),
     });
+    get().saveToHistory();
   },
 
   updateLayer: (layerId, updates) => {
@@ -108,6 +121,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         ),
       },
     });
+    // Debounce history saves for updates
+    setTimeout(() => get().saveToHistory(), 500);
   },
 
   reorderLayers: (layerIds) => {
@@ -126,6 +141,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         layers: reorderedLayers,
       },
     });
+    get().saveToHistory();
   },
 
   seekTo: (time) => {
@@ -141,5 +157,56 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const { isPlaying } = get();
     set({ isPlaying: !isPlaying });
   },
-}));
 
+  saveToHistory: () => {
+    const { editorState, history, historyIndex } = get();
+    if (!editorState) return;
+
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push({
+      editorState: JSON.parse(JSON.stringify(editorState)),
+      timestamp: Date.now(),
+    });
+
+    // Limit history size
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory.shift();
+    }
+
+    set({
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+    });
+  },
+
+  undo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      set({
+        editorState: history[newIndex].editorState,
+        historyIndex: newIndex,
+      });
+    }
+  },
+
+  redo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      set({
+        editorState: history[newIndex].editorState,
+        historyIndex: newIndex,
+      });
+    }
+  },
+
+  canUndo: () => {
+    return get().historyIndex > 0;
+  },
+
+  canRedo: () => {
+    const { history, historyIndex } = get();
+    return historyIndex < history.length - 1;
+  },
+}));

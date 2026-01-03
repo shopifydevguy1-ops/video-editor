@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue, Worker, Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -17,6 +17,7 @@ export class RenderQueueService {
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
+    @Inject(forwardRef(() => RenderService))
     private renderService: RenderService,
     private websocketGateway: RenderProgressGateway,
   ) {
@@ -162,26 +163,20 @@ export class RenderQueueService {
       job.updateProgress(10);
 
       // Call render service to process
-      // Note: This is a simplified version - actual implementation
-      // would handle the rendering process with progress updates
       const editorState = render.project.editorState as any;
       const settings = render.settings as any;
 
-      // Simulate progress updates with WebSocket notifications
-      for (let i = 10; i <= 100; i += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        job.updateProgress(i);
-        await this.prisma.render.update({
-          where: { id: renderId },
-          data: { progress: i },
-        });
-        // Emit WebSocket update
-        this.websocketGateway.emitProgress(renderId, i);
-      }
+      // Actually render the video
+      const outputPath = await this.renderService.renderVideo(
+        renderId,
+        editorState,
+        settings,
+      );
 
-      // In real implementation, this would call renderService.renderVideo()
-      // For now, we'll mark as completed
-      const outputUrl = `https://storage.example.com/renders/${renderId}.mp4`;
+      // Upload to storage
+      const outputUrl = await this.renderService.uploadVideo(outputPath, renderId);
+
+      // Update as completed
       await this.prisma.render.update({
         where: { id: renderId },
         data: {
@@ -195,6 +190,9 @@ export class RenderQueueService {
       job.updateProgress(100);
       // Emit completion via WebSocket
       this.websocketGateway.emitComplete(renderId, outputUrl);
+
+      // Cleanup temp files
+      await this.renderService.cleanupTempFiles(outputPath);
     } catch (error: any) {
       this.logger.error(`Render job ${renderId} failed: ${error.message}`);
       await this.prisma.render.update({

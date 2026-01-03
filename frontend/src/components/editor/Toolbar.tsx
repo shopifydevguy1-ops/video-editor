@@ -2,6 +2,7 @@
 
 import { useEditorStore } from '@/lib/stores/editor-store';
 import { apiClient } from '@/lib/api/client';
+import { ExportModal } from './ExportModal';
 import { useState } from 'react';
 
 interface ToolbarProps {
@@ -9,9 +10,10 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ projectId }: ToolbarProps) {
-  const { editorState, pause } = useEditorStore();
+  const { editorState, pause, undo, redo, canUndo, canRedo } = useEditorStore();
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const handleSave = async () => {
     if (!editorState) return;
@@ -30,7 +32,7 @@ export function Toolbar({ projectId }: ToolbarProps) {
     }
   };
 
-  const handleExport = async () => {
+  const handleExport = async (settings: any) => {
     if (!editorState) return;
 
     setExporting(true);
@@ -38,11 +40,14 @@ export function Toolbar({ projectId }: ToolbarProps) {
     try {
       const response = await apiClient.instance.post('/render/start', {
         projectId,
+        settings,
       });
       // Handle render job creation
       console.log('Render started:', response.data);
+      alert('Render started! Check render status in the projects page.');
     } catch (error) {
       console.error('Failed to start render:', error);
+      alert('Failed to start render. Please try again.');
     } finally {
       setExporting(false);
     }
@@ -58,6 +63,22 @@ export function Toolbar({ projectId }: ToolbarProps) {
           ← Back
         </button>
         <div className="h-6 w-px bg-gray-600" />
+        <button
+          onClick={undo}
+          disabled={!canUndo()}
+          className="px-3 py-1.5 text-sm hover:bg-gray-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Undo (Cmd+Z)"
+        >
+          ↶ Undo
+        </button>
+        <button
+          onClick={redo}
+          disabled={!canRedo()}
+          className="px-3 py-1.5 text-sm hover:bg-gray-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Redo (Cmd+Shift+Z)"
+        >
+          ↷ Redo
+        </button>
       </div>
 
       <div className="flex-1" />
@@ -71,13 +92,23 @@ export function Toolbar({ projectId }: ToolbarProps) {
           {saving ? 'Saving...' : 'Save'}
         </button>
         <button
-          onClick={handleExport}
+          onClick={() => setShowExportModal(true)}
           disabled={exporting || !editorState}
           className="px-4 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded transition disabled:opacity-50"
         >
           {exporting ? 'Exporting...' : 'Export Video'}
         </button>
       </div>
+
+      {showExportModal && editorState && (
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={handleExport}
+          defaultAspectRatio={editorState.aspectRatio}
+          defaultResolution={editorState.resolution}
+        />
+      )}
     </div>
   );
 }

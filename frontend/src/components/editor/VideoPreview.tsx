@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from '@/lib/stores/editor-store';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { Layer } from '@ai-video-editor/shared';
 
 export function VideoPreview() {
   const {
@@ -15,8 +16,10 @@ export function VideoPreview() {
     togglePlay,
   } = useEditorStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const imageRefs = useRef<Map<string, HTMLImageElement>>(new Map());
   const animationFrameRef = useRef<number>();
-  const [isDragging, setIsDragging] = useState(false);
+  const [loadedAssets, setLoadedAssets] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!editorState || !canvasRef.current) return;
@@ -45,6 +48,13 @@ export function VideoPreview() {
       canvas.height = canvasHeight;
     }
 
+    // Load video and image assets
+    editorState.layers.forEach((layer) => {
+      if ((layer.type === 'video' || layer.type === 'image') && layer.src) {
+        loadAsset(layer.id, layer.src, layer.type);
+      }
+    });
+
     const render = () => {
       if (!ctx || !editorState) return;
 
@@ -67,17 +77,47 @@ export function VideoPreview() {
     };
 
     render();
-  }, [editorState, currentTime]);
+  }, [editorState, currentTime, loadedAssets]);
+
+  const loadAsset = async (id: string, src: string, type: 'video' | 'image') => {
+    if (loadedAssets.has(id)) return;
+
+    return new Promise<void>((resolve, reject) => {
+      if (type === 'video') {
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.preload = 'auto';
+        video.src = src;
+        video.onloadeddata = () => {
+          videoRefs.current.set(id, video);
+          setLoadedAssets((prev) => new Set(prev).add(id));
+          resolve();
+        };
+        video.onerror = reject;
+      } else {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = src;
+        img.onload = () => {
+          imageRefs.current.set(id, img);
+          setLoadedAssets((prev) => new Set(prev).add(id));
+          resolve();
+        };
+        img.onerror = reject;
+      }
+    });
+  };
 
   const renderLayer = (
     ctx: CanvasRenderingContext2D,
-    layer: any,
+    layer: Layer,
     time: number,
     canvasWidth: number,
     canvasHeight: number,
   ) => {
     const relativeTime = time - layer.startTime;
     const opacity = layer.opacity || 1;
+    const scale = layer.scale || 1;
 
     ctx.save();
     ctx.globalAlpha = opacity;
@@ -91,16 +131,56 @@ export function VideoPreview() {
       const x = (layer.position?.x || 0) * (canvasWidth / (editorState?.resolution.width || 1920));
       const y = (layer.position?.y || 0) * (canvasHeight / (editorState?.resolution.height || 1080));
       
+      if (layer.backgroundColor) {
+        const metrics = ctx.measureText(layer.content || '');
+        ctx.fillStyle = layer.backgroundColor;
+        ctx.fillRect(x - 5, y - 5, metrics.width + 10, layer.fontSize + 10);
+      }
+      
+      ctx.fillStyle = layer.color || '#fff';
       ctx.fillText(layer.content || '', x, y);
     } else if (layer.type === 'image' && layer.src) {
-      // Image rendering would require loading the image
-      // For now, just draw a placeholder
-      ctx.fillStyle = '#333';
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      ctx.fillStyle = '#666';
-      ctx.font = '16px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Image Layer', canvasWidth / 2, canvasHeight / 2);
+      const img = imageRefs.current.get(layer.id);
+      if (img && img.complete) {
+        const x = (layer.position?.x || 0) * (canvasWidth / (editorState?.resolution.width || 1920));
+        const y = (layer.position?.y || 0) * (canvasHeight / (editorState?.resolution.height || 1080));
+        const width = img.width * scale * (canvasWidth / (editorState?.resolution.width || 1920));
+        const height = img.height * scale * (canvasHeight / (editorState?.resolution.height || 1080));
+        
+        ctx.drawImage(img, x, y, width, height);
+      } else {
+        // Placeholder while loading
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = '#666';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Loading image...', canvasWidth / 2, canvasHeight / 2);
+      }
+    } else if (layer.type === 'video' && layer.src) {
+      const video = videoRefs.current.get(layer.id);
+      if (video && video.readyState >= 2) {
+        const x = (layer.position?.x || 0) * (canvasWidth / (editorState?.resolution.width || 1920));
+        const y = (layer.position?.y || 0) * (canvasHeight / (editorState?.resolution.height || 1080));
+        const width = video.videoWidth * scale * (canvasWidth / (editorState?.resolution.width || 1920));
+        const height = video.videoHeight * scale * (canvasHeight / (editorState?.resolution.height || 1080));
+        
+        // Set video time
+        const videoTime = relativeTime + (layer.trimStart || 0);
+        if (Math.abs(video.currentTime - videoTime) > 0.1) {
+          video.currentTime = videoTime;
+        }
+        
+        ctx.drawImage(video, x, y, width, height);
+      } else {
+        // Placeholder while loading
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = '#666';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Loading video...', canvasWidth / 2, canvasHeight / 2);
+      }
     }
 
     ctx.restore();
@@ -167,7 +247,6 @@ export function VideoPreview() {
         <canvas
           ref={canvasRef}
           className="max-w-full max-h-full bg-gray-900"
-          style={{ imageRendering: 'pixelated' }}
         />
       </div>
       <div className="h-20 bg-gray-800 border-t border-gray-700 flex items-center px-4 gap-4">
@@ -220,4 +299,3 @@ export function VideoPreview() {
     </div>
   );
 }
-

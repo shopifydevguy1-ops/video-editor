@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RenderQueueService } from './render-queue.service';
+import { RenderProgressGateway } from '../websocket/websocket.gateway';
 import { StartRenderDto } from './dto/start-render.dto';
-import { RenderJob, RenderStatus, RenderSettings, EditorState } from '@ai-video-editor/shared';
+import { RenderJob, RenderStatus, RenderSettings, EditorState, Layer } from '@ai-video-editor/shared';
 import * as ffmpeg from 'fluent-ffmpeg';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -18,6 +19,7 @@ export class RenderService {
     private prisma: PrismaService,
     private configService: ConfigService,
     private renderQueue: RenderQueueService,
+    private websocketGateway: RenderProgressGateway,
   ) {
     this.tempDir = path.join(process.cwd(), 'temp', 'renders');
     this.ensureTempDir();
@@ -79,62 +81,7 @@ export class RenderService {
     return this.mapToRenderJob(render);
   }
 
-  private async processRender(renderId: string): Promise<void> {
-    const render = await this.prisma.render.findUnique({
-      where: { id: renderId },
-      include: { project: true },
-    });
-
-    if (!render) {
-      throw new Error('Render not found');
-    }
-
-    try {
-      // Update status to processing
-      await this.prisma.render.update({
-        where: { id: renderId },
-        data: {
-          status: 'processing',
-          startedAt: new Date(),
-          progress: 0,
-        },
-      });
-
-      const editorState = render.project.editorState as EditorState;
-      const settings = render.settings as RenderSettings;
-
-      // Generate video
-      const outputPath = await this.renderVideo(renderId, editorState, settings);
-
-      // Upload to storage
-      const outputUrl = await this.uploadVideo(outputPath, renderId);
-
-      // Update render as completed
-      await this.prisma.render.update({
-        where: { id: renderId },
-        data: {
-          status: 'completed',
-          progress: 100,
-          outputUrl,
-          completedAt: new Date(),
-        },
-      });
-
-      // Cleanup temp files
-      await this.cleanupTempFiles(outputPath);
-    } catch (error: any) {
-      this.logger.error(`Render ${renderId} failed: ${error.message}`, error.stack);
-      await this.prisma.render.update({
-        where: { id: renderId },
-        data: {
-          status: 'failed',
-          errorMessage: error.message,
-        },
-      });
-    }
-  }
-
-  private async renderVideo(
+  async renderVideo(
     renderId: string,
     editorState: EditorState,
     settings: RenderSettings,
@@ -144,35 +91,43 @@ export class RenderService {
     return new Promise((resolve, reject) => {
       const command = ffmpeg();
 
-      // Add video layers
-      const videoLayers = editorState.layers.filter((l) => l.type === 'video' || l.type === 'image');
+      // Collect all video/image layers
+      const videoLayers = editorState.layers.filter(
+        (l) => l.type === 'video' || l.type === 'image',
+      );
+      const audioLayers = editorState.layers.filter((l) => l.type === 'audio');
+      const textLayers = editorState.layers.filter((l) => l.type === 'text');
+
+      // Add video/image inputs
       if (videoLayers.length === 0) {
-        // Create a blank video if no video layers
+        // Create blank video
         command
           .input('color=c=black:s=' + `${settings.resolution.width}x${settings.resolution.height}`)
           .inputFormat('lavfi')
           .inputOptions(['-t', editorState.duration.toString()]);
       } else {
-        // Add actual video/image inputs
         videoLayers.forEach((layer) => {
-          if (layer.type === 'video' && layer.src) {
-            command.input(layer.src);
-          } else if (layer.type === 'image' && layer.src) {
+          if (layer.src) {
             command.input(layer.src);
           }
         });
       }
 
-      // Add audio layers
-      const audioLayers = editorState.layers.filter((l) => l.type === 'audio');
+      // Add audio inputs
       audioLayers.forEach((layer) => {
         if (layer.src) {
           command.input(layer.src);
         }
       });
 
-      // Build filter complex for composition
-      const filterComplex = this.buildFilterComplex(editorState, settings);
+      // Build comprehensive filter complex
+      const filterComplex = this.buildAdvancedFilterComplex(
+        editorState,
+        settings,
+        videoLayers,
+        textLayers,
+        audioLayers,
+      );
 
       command
         .complexFilter(filterComplex)
@@ -184,7 +139,7 @@ export class RenderService {
           `-pix_fmt yuv420p`,
           settings.bitrate ? `-b:v ${settings.bitrate}` : '',
         ])
-        .outputOptions(['-c:a aac', '-b:a 192k'])
+        .outputOptions(['-c:a aac', '-b:a 192k', '-shortest'])
         .output(outputPath)
         .on('start', (commandLine) => {
           this.logger.log(`FFmpeg started: ${commandLine}`);
@@ -205,31 +160,89 @@ export class RenderService {
     });
   }
 
-  private buildFilterComplex(editorState: EditorState, settings: RenderSettings): string[] {
-    // This is a simplified version - full implementation would handle:
-    // - Multiple video layers with positioning/scaling
-    // - Text overlays
-    // - Transitions
-    // - Audio mixing
-
+  private buildAdvancedFilterComplex(
+    editorState: EditorState,
+    settings: RenderSettings,
+    videoLayers: Layer[],
+    textLayers: Layer[],
+    audioLayers: Layer[],
+  ): string[] {
     const filters: string[] = [];
+    let videoIndex = 0;
+    let audioIndex = videoLayers.length;
 
-    // For now, just scale first video to output resolution
-    filters.push(
-      `[0:v]scale=${settings.resolution.width}:${settings.resolution.height}[v0]`,
-    );
+    // Process video layers with transitions
+    videoLayers.forEach((layer, index) => {
+      if (layer.type === 'video' || layer.type === 'image') {
+        const scale = layer.scale || 1;
+        const x = layer.position?.x || 0;
+        const y = layer.position?.y || 0;
+        const opacity = layer.opacity || 1;
 
-    // Add text overlays if needed
-    const textLayers = editorState.layers.filter((l) => l.type === 'text');
-    textLayers.forEach((layer, index) => {
-      if (layer.type === 'text') {
-        const x = layer.position?.x || 100;
-        const y = layer.position?.y || 100;
+        // Scale and position
         filters.push(
-          `[v${index}]drawtext=text='${layer.content}':fontsize=${layer.fontSize}:fontcolor=${layer.color}:x=${x}:y=${y}[v${index + 1}]`,
+          `[${videoIndex}:v]scale=${settings.resolution.width * scale}:${settings.resolution.height * scale},setpts=PTS-STARTPTS[v${index}]`,
         );
+
+        // Overlay with opacity
+        if (index === 0) {
+          filters.push(
+            `color=c=black:s=${settings.resolution.width}x${settings.resolution.height}[bg]`,
+          );
+          filters.push(
+            `[bg][v${index}]overlay=${x}:${y}:enable='between(t,${layer.startTime},${layer.startTime + layer.duration})':alpha=${opacity}[comp${index}]`,
+          );
+        } else {
+          filters.push(
+            `[comp${index - 1}][v${index}]overlay=${x}:${y}:enable='between(t,${layer.startTime},${layer.startTime + layer.duration})':alpha=${opacity}[comp${index}]`,
+          );
+        }
+
+        videoIndex++;
       }
     });
+
+    // Add text overlays
+    let compIndex = videoLayers.length > 0 ? videoLayers.length - 1 : 0;
+    textLayers.forEach((layer, index) => {
+      if (layer.type === 'text' && settings.includeCaptions) {
+        const x = (layer.position?.x || 0) * (settings.resolution.width / (editorState.resolution.width || 1920));
+        const y = (layer.position?.y || 0) * (settings.resolution.height / (editorState?.resolution.height || 1080));
+        const fontSize = layer.fontSize * (settings.resolution.width / (editorState.resolution.width || 1920));
+
+        // Escape text for FFmpeg
+        const escapedText = layer.content
+          .replace(/\\/g, '\\\\')
+          .replace(/:/g, '\\:')
+          .replace(/'/g, "\\'");
+
+        filters.push(
+          `[comp${compIndex}]drawtext=text='${escapedText}':fontsize=${fontSize}:fontcolor=${layer.color}:x=${x}:y=${y}:enable='between(t,${layer.startTime},${layer.startTime + layer.duration})'[comp${compIndex + 1}]`,
+        );
+        compIndex++;
+      }
+    });
+
+    // Final output
+    filters.push(`[comp${compIndex}]scale=${settings.resolution.width}:${settings.resolution.height}[final]`);
+
+    // Audio mixing
+    if (audioLayers.length > 0) {
+      audioLayers.forEach((layer, index) => {
+        const volume = layer.volume || 1;
+        filters.push(
+          `[${audioIndex + index}:a]volume=${volume},adelay=${layer.startTime * 1000}|${layer.startTime * 1000}[a${index}]`,
+        );
+      });
+
+      // Mix all audio tracks
+      if (audioLayers.length > 1) {
+        const audioInputs = audioLayers.map((_, i) => `[a${i}]`).join('');
+        filters.push(`${audioInputs}amix=inputs=${audioLayers.length}[audio]`);
+      } else {
+        filters.push(`[a0]acopy[audio]`);
+      }
+    }
 
     return filters;
   }
@@ -240,6 +253,7 @@ export class RenderService {
         where: { id: renderId },
         data: { progress: Math.round(progress) },
       });
+      this.websocketGateway.emitProgress(renderId, progress);
     } catch (error) {
       this.logger.warn(`Failed to update progress for render ${renderId}`);
     }
@@ -247,7 +261,6 @@ export class RenderService {
 
   private async uploadVideo(filePath: string, renderId: string): Promise<string> {
     // TODO: Implement S3/R2 upload
-    // For now, return placeholder
     return `https://storage.example.com/renders/${renderId}.mp4`;
   }
 

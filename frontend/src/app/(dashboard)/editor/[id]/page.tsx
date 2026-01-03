@@ -9,6 +9,7 @@ import { VideoPreview } from '@/components/editor/VideoPreview';
 import { LayersPanel } from '@/components/editor/LayersPanel';
 import { PropertiesPanel } from '@/components/editor/PropertiesPanel';
 import { Toolbar } from '@/components/editor/Toolbar';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { apiClient } from '@/lib/api/client';
 import { Project, EditorState } from '@ai-video-editor/shared';
 
@@ -18,6 +19,9 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { setEditorState } = useEditorStore();
+  
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts();
 
   useEffect(() => {
     const loadProject = async () => {
