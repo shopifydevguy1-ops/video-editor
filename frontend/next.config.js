@@ -28,10 +28,12 @@ const nextConfig = {
   },
   // For monorepo support
   webpack: (config, { isServer }) => {
-    // Resolve shared package
+    // Resolve shared package - use source for transpilation
+    const path = require('path');
+    const sharedPath = path.resolve(__dirname, '../shared/src');
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@ai-video-editor/shared': require('path').resolve(__dirname, '../shared/src'),
+      '@ai-video-editor/shared': sharedPath,
     };
     return config;
   },
