@@ -223,18 +223,38 @@ export class GeneratorService {
             id: `visual-${index}`,
             type: 'image',
             name: `Visual ${index + 1}`,
-          startTime: currentTime,
-          duration: ttsAudio.duration,
-          visible: true,
-          locked: false,
-          opacity: 1,
-          zIndex: index - 100,
-          mediaId: '',
-          src: stockVideoUrl || '', // Stock footage URL from Pexels
-          position: { x: 0, y: 0 },
-          scale: 1,
-          rotation: 0,
-        });
+            startTime: currentTime,
+            duration: ttsAudio.duration,
+            visible: true,
+            locked: false,
+            opacity: 1,
+            zIndex: index - 100,
+            mediaId: '',
+            src: stockVideoUrl || '',
+            position: { x: 0, y: 0 },
+            scale: 1,
+            rotation: 0,
+          } as any);
+        } else {
+          layers.push({
+            id: `visual-${index}`,
+            type: 'video',
+            name: `Visual ${index + 1}`,
+            startTime: currentTime,
+            duration: ttsAudio.duration,
+            visible: true,
+            locked: false,
+            opacity: 1,
+            zIndex: index - 100,
+            mediaId: '',
+            src: stockVideoUrl || '',
+            trimStart: 0,
+            trimEnd: 0,
+            position: { x: 0, y: 0 },
+            scale: 1,
+            rotation: 0,
+          } as any);
+        }
 
         currentTime += ttsAudio.duration;
       });
