@@ -113,14 +113,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const { editorState } = get();
     if (!editorState) return;
 
-    set({
-      editorState: {
-        ...editorState,
-        layers: editorState.layers.map((layer) =>
-          layer.id === layerId ? { ...layer, ...updates } : layer,
-        ),
-      },
-    });
+      set({
+        editorState: {
+          ...editorState,
+          layers: editorState.layers.map((layer) =>
+            layer.id === layerId ? { ...layer, ...updates } as Layer : layer,
+          ),
+        },
+      });
     // Debounce history saves for updates
     setTimeout(() => get().saveToHistory(), 500);
   },
