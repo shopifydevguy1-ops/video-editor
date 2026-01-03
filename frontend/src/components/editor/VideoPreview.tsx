@@ -21,93 +21,6 @@ export function VideoPreview() {
   const animationFrameRef = useRef<number>();
   const [loadedAssets, setLoadedAssets] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!editorState || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size based on aspect ratio
-    const container = canvas.parentElement;
-    if (container) {
-      const { width, height } = editorState.resolution;
-      const aspectRatio = width / height;
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      
-      let canvasWidth = containerWidth;
-      let canvasHeight = containerWidth / aspectRatio;
-      
-      if (canvasHeight > containerHeight) {
-        canvasHeight = containerHeight;
-        canvasWidth = containerHeight * aspectRatio;
-      }
-
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-    }
-
-    // Load video and image assets
-    editorState.layers.forEach((layer) => {
-      if ((layer.type === 'video' || layer.type === 'image') && layer.src) {
-        loadAsset(layer.id, layer.src, layer.type);
-      }
-    });
-
-    const render = () => {
-      if (!ctx || !editorState) return;
-
-      // Clear canvas
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Render layers at current time
-      const visibleLayers = editorState.layers
-        .filter((layer) => {
-          const start = layer.startTime;
-          const end = layer.startTime + layer.duration;
-          return currentTime >= start && currentTime <= end && layer.visible;
-        })
-        .sort((a, b) => a.zIndex - b.zIndex);
-
-      visibleLayers.forEach((layer) => {
-        renderLayer(ctx, layer, currentTime, canvas.width, canvas.height);
-      });
-    };
-
-    render();
-  }, [editorState, currentTime, loadedAssets]);
-
-  const loadAsset = async (id: string, src: string, type: 'video' | 'image') => {
-    if (loadedAssets.has(id)) return;
-
-    return new Promise<void>((resolve, reject) => {
-      if (type === 'video') {
-        const video = document.createElement('video');
-        video.crossOrigin = 'anonymous';
-        video.preload = 'auto';
-        video.src = src;
-        video.onloadeddata = () => {
-          videoRefs.current.set(id, video);
-          setLoadedAssets((prev) => new Set(prev).add(id));
-          resolve();
-        };
-        video.onerror = reject;
-      } else {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = src;
-        img.onload = () => {
-          imageRefs.current.set(id, img);
-          setLoadedAssets((prev) => new Set(prev).add(id));
-          resolve();
-        };
-        img.onerror = reject;
-      }
-    });
-  };
-
   const renderLayer = (
     ctx: CanvasRenderingContext2D,
     layer: Layer,
@@ -184,6 +97,94 @@ export function VideoPreview() {
     }
 
     ctx.restore();
+  };
+
+  useEffect(() => {
+    if (!editorState || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size based on aspect ratio
+    const container = canvas.parentElement;
+    if (container) {
+      const { width, height } = editorState.resolution;
+      const aspectRatio = width / height;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      let canvasWidth = containerWidth;
+      let canvasHeight = containerWidth / aspectRatio;
+      
+      if (canvasHeight > containerHeight) {
+        canvasHeight = containerHeight;
+        canvasWidth = containerHeight * aspectRatio;
+      }
+
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+    }
+
+    // Load video and image assets
+    editorState.layers.forEach((layer) => {
+      if ((layer.type === 'video' || layer.type === 'image') && layer.src) {
+        loadAsset(layer.id, layer.src, layer.type);
+      }
+    });
+
+    const render = () => {
+      if (!ctx || !editorState) return;
+
+      // Clear canvas
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Render layers at current time
+      const visibleLayers = editorState.layers
+        .filter((layer) => {
+          const start = layer.startTime;
+          const end = layer.startTime + layer.duration;
+          return currentTime >= start && currentTime <= end && layer.visible;
+        })
+        .sort((a, b) => a.zIndex - b.zIndex);
+
+      visibleLayers.forEach((layer) => {
+        renderLayer(ctx, layer, currentTime, canvas.width, canvas.height);
+      });
+    };
+
+    render();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorState, currentTime, loadedAssets]);
+
+  const loadAsset = async (id: string, src: string, type: 'video' | 'image') => {
+    if (loadedAssets.has(id)) return;
+
+    return new Promise<void>((resolve, reject) => {
+      if (type === 'video') {
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.preload = 'auto';
+        video.src = src;
+        video.onloadeddata = () => {
+          videoRefs.current.set(id, video);
+          setLoadedAssets((prev) => new Set(prev).add(id));
+          resolve();
+        };
+        video.onerror = reject;
+      } else {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = src;
+        img.onload = () => {
+          imageRefs.current.set(id, img);
+          setLoadedAssets((prev) => new Set(prev).add(id));
+          resolve();
+        };
+        img.onerror = reject;
+      }
+    });
   };
 
   useEffect(() => {

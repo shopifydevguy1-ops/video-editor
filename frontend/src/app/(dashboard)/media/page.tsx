@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { MediaUpload } from '@/components/media/MediaUpload';
 import { apiClient } from '@/lib/api/client';
 import { MediaItem, MediaType } from '@ai-video-editor/shared';
-import { Upload, Search, Grid, List, Trash2, Video, Image, Music } from 'lucide-react';
+import { Upload, Search, Grid, List, Trash2, Video, Image as ImageIcon, Music } from 'lucide-react';
 import { formatFileSize, formatDuration } from '@/lib/utils';
 
 export default function MediaPage() {
@@ -62,7 +63,7 @@ export default function MediaPage() {
       case 'video':
         return <Video className="w-6 h-6" />;
       case 'image':
-        return <Image className="w-6 h-6" />;
+        return <ImageIcon className="w-6 h-6" />;
       case 'audio':
         return <Music className="w-6 h-6" />;
     }
@@ -142,11 +143,15 @@ export default function MediaPage() {
                   className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition group"
                 >
                   {item.thumbnailUrl ? (
-                    <img
-                      src={item.thumbnailUrl}
-                      alt={item.name}
-                      className="w-full h-40 object-cover"
-                    />
+                    <div className="w-full h-40 relative">
+                      <Image
+                        src={item.thumbnailUrl}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <div className="w-full h-40 bg-gray-700 flex items-center justify-center">
                       {getMediaIcon(item.type)}
@@ -178,11 +183,15 @@ export default function MediaPage() {
                   className="bg-gray-800 rounded-lg p-4 flex items-center gap-4 hover:bg-gray-700 transition group"
                 >
                   {item.thumbnailUrl ? (
-                    <img
-                      src={item.thumbnailUrl}
-                      alt={item.name}
-                      className="w-20 h-20 object-cover rounded"
-                    />
+                    <div className="w-20 h-20 relative rounded overflow-hidden">
+                      <Image
+                        src={item.thumbnailUrl}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <div className="w-20 h-20 bg-gray-700 rounded flex items-center justify-center">
                       {getMediaIcon(item.type)}

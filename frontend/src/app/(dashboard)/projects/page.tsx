@@ -86,11 +86,15 @@ export default function ProjectsPage() {
                 className="bg-gray-800 rounded-lg p-6 cursor-pointer hover:bg-gray-700 transition"
               >
                 {project.thumbnailUrl ? (
-                  <img
-                    src={project.thumbnailUrl}
-                    alt={project.name}
-                    className="w-full h-40 object-cover rounded mb-4"
-                  />
+                  <div className="w-full h-40 relative rounded mb-4 overflow-hidden">
+                    <Image
+                      src={project.thumbnailUrl}
+                      alt={project.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-40 bg-gray-700 rounded mb-4 flex items-center justify-center">
                     <Video className="w-12 h-12 text-gray-500" />

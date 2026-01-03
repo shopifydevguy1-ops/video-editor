@@ -21,6 +21,41 @@ export function Timeline() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; time: number } | null>(null);
 
+  const pixelsPerSecond = editorState ? PIXELS_PER_SECOND * zoom : PIXELS_PER_SECOND;
+  const timelineWidth = editorState ? editorState.duration * pixelsPerSecond : 0;
+
+  useEffect(() => {
+    if (isDragging && dragStart && editorState) {
+      const handleMouseMove = (e: MouseEvent) => {
+        if (timelineRef.current) {
+          const rect = timelineRef.current.getBoundingClientRect();
+          const deltaX = e.clientX - dragStart.x;
+          const deltaTime = deltaX / pixelsPerSecond;
+          const newStartTime = Math.max(0, dragStart.time + deltaTime);
+
+          selectedLayerIds.forEach((layerId) => {
+            const layer = editorState.layers.find((l) => l.id === layerId);
+            if (layer) {
+              updateLayer(layerId, { startTime: newStartTime });
+            }
+          });
+        }
+      };
+
+      const handleMouseUp = () => {
+        handleLayerDragEnd();
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart, selectedLayerIds, editorState, pixelsPerSecond, updateLayer]);
+
   if (!editorState) {
     return (
       <div className="h-64 bg-gray-800 border-t border-gray-700 flex items-center justify-center">
@@ -28,9 +63,6 @@ export function Timeline() {
       </div>
     );
   }
-
-  const pixelsPerSecond = PIXELS_PER_SECOND * zoom;
-  const timelineWidth = editorState.duration * pixelsPerSecond;
 
   const handleTimelineClick = (e: React.MouseEvent) => {
     if (!timelineRef.current) return;
@@ -74,37 +106,6 @@ export function Timeline() {
     setDragStart(null);
   };
 
-  useEffect(() => {
-    if (isDragging) {
-      const handleMouseMove = (e: MouseEvent) => {
-        if (timelineRef.current) {
-          const rect = timelineRef.current.getBoundingClientRect();
-          const deltaX = e.clientX - dragStart!.x;
-          const deltaTime = deltaX / pixelsPerSecond;
-          const newStartTime = Math.max(0, dragStart!.time + deltaTime);
-
-          selectedLayerIds.forEach((layerId) => {
-            const layer = editorState.layers.find((l) => l.id === layerId);
-            if (layer) {
-              updateLayer(layerId, { startTime: newStartTime });
-            }
-          });
-        }
-      };
-
-      const handleMouseUp = () => {
-        handleLayerDragEnd();
-      };
-
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragStart, selectedLayerIds, editorState, pixelsPerSecond, updateLayer]);
 
   const getLayerColor = (layer: Layer): string => {
     switch (layer.type) {
