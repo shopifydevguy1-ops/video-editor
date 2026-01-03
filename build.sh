@@ -35,17 +35,18 @@ fi
 
 echo "Building from repository root: $(pwd)"
 
+# Root npm install already installed all workspace dependencies
+# Just run the build commands directly
+
 # Build shared package
 echo "Building shared package..."
 cd shared
-npm install
 npm run build
 cd ..
 
 # Build frontend
 echo "Building frontend..."
 cd frontend
-npm install
 npm run build
 cd ..
 
