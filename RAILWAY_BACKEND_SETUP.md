@@ -181,7 +181,7 @@ railway link
 ### Set Environment Variables
 
 ```bash
-railway variables set DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres"
+railway variables set DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"
 railway variables set JWT_SECRET="your-secret"
 railway variables set JWT_REFRESH_SECRET="your-refresh-secret"
 railway variables set FRONTEND_URL="https://your-vercel-app.vercel.app"
