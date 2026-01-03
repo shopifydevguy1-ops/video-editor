@@ -170,7 +170,8 @@ export class GeneratorService {
       const layers: Layer[] = [];
       let currentTime = 0;
 
-      scenes.forEach((scene, index) => {
+      for (let index = 0; index < scenes.length; index++) {
+        const scene = scenes[index];
         const ttsAudio = ttsAudios[index];
 
         // Add audio layer
