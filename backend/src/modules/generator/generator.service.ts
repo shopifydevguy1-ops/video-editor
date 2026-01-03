@@ -257,7 +257,7 @@ export class GeneratorService {
         }
 
         currentTime += ttsAudio.duration;
-      });
+      }
 
       // 6. Update project with editor state
       const editorState: EditorState = {
