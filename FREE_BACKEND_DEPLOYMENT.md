@@ -34,13 +34,15 @@ Since Railway's free plan has expired, here are the best **free alternatives** f
 4. **Add Environment Variables**:
    Click "Environment" tab and add:
    ```
-   DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
    JWT_SECRET=your-random-secret-key-here
    JWT_REFRESH_SECRET=your-random-refresh-secret-here
    FRONTEND_URL=https://your-vercel-app.vercel.app
    PORT=4000
    NODE_ENV=production
    ```
+
+   **Important**: Get your actual `DATABASE_URL` from Supabase Dashboard → Settings → Database → Connection string.
 
 5. **Deploy**:
    - Click "Create Web Service"
@@ -135,12 +137,14 @@ Since Railway's free plan has expired, here are the best **free alternatives** f
 
 6. **Set Secrets**:
    ```bash
-   fly secrets set DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres"
+   fly secrets set DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"
    fly secrets set JWT_SECRET="your-secret"
    fly secrets set JWT_REFRESH_SECRET="your-refresh-secret"
    fly secrets set FRONTEND_URL="https://your-vercel-app.vercel.app"
    fly secrets set NODE_ENV="production"
    ```
+
+   **Note**: Replace `YOUR_PASSWORD` and `YOUR_PROJECT_REF` with your actual Supabase credentials.
 
 7. **Deploy**:
    ```bash
@@ -179,7 +183,7 @@ Since Railway's free plan has expired, here are the best **free alternatives** f
 
 3. **Add Environment Variables**:
    - Go to "Environment" tab
-   - Add all required variables
+   - Add all required variables (use placeholder for DATABASE_URL)
 
 4. **Deploy**:
    - Click "Deploy"
@@ -246,7 +250,17 @@ Just use the web interface!
 
 ---
 
+## Security Note
+
+⚠️ **Important**: Never commit actual database credentials to Git. Always use:
+- Placeholder text in documentation
+- Environment variables in deployment platforms
+- `.env` files (which should be in `.gitignore`)
+
+Get your actual Supabase connection string from: Supabase Dashboard → Settings → Database → Connection string
+
+---
+
 ## Need Help?
 
 If you encounter issues with any platform, let me know and I can help troubleshoot!
-

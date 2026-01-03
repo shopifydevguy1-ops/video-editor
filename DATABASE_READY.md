@@ -12,7 +12,7 @@
 
 **Connection String:**
 ```
-postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 ```
 
 **Tables Created:**
@@ -29,7 +29,7 @@ postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/post
 
 ```bash
 cd backend
-DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres" npm run create-admin
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres" npm run create-admin
 ```
 
 **Default Admin Credentials:**
@@ -40,7 +40,7 @@ DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabas
 
 Create `backend/.env`:
 ```env
-DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"
 JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 JWT_REFRESH_SECRET="your-super-secret-refresh-key-change-in-production"
 FRONTEND_URL="http://localhost:3001"
@@ -59,7 +59,7 @@ npm run start:dev
 When deploying to Railway/Render, add these environment variables:
 
 ```
-DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 JWT_SECRET=your-production-secret
 JWT_REFRESH_SECRET=your-production-refresh-secret
 FRONTEND_URL=https://your-vercel-app.vercel.app

@@ -4,7 +4,7 @@
 
 Your Supabase PostgreSQL is connected:
 ```
-postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 ```
 
 ## Next Steps
@@ -13,21 +13,21 @@ postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/post
 
 ```bash
 cd backend
-DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres" npx prisma migrate dev --name init
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres" npx prisma migrate dev --name init
 ```
 
 ### 2. Generate Prisma Client
 
 ```bash
 cd backend
-DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres" npx prisma generate
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres" npx prisma generate
 ```
 
 ### 3. Create Admin Account
 
 ```bash
 cd backend
-DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres" npm run create-admin
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres" npm run create-admin
 ```
 
 ### 4. Start Backend
@@ -35,7 +35,7 @@ DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabas
 ```bash
 cd backend
 # Create .env file with DATABASE_URL
-echo 'DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres"' > .env
+echo 'DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"' > .env
 npm run start:dev
 ```
 
@@ -44,7 +44,7 @@ npm run start:dev
 When deploying backend to Railway/Render, add this environment variable:
 
 ```
-DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 ```
 
 ## Supabase Dashboard

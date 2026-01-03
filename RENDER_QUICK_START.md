@@ -29,13 +29,15 @@ Fill in these settings:
 Click "Environment" and add:
 
 ```env
-DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 JWT_SECRET=change-this-to-a-random-secret-key
 JWT_REFRESH_SECRET=change-this-to-another-random-secret-key
 FRONTEND_URL=https://your-vercel-app.vercel.app
 PORT=4000
 NODE_ENV=production
 ```
+
+**Note**: Replace `YOUR_PASSWORD` and `YOUR_PROJECT_REF` with your actual Supabase credentials. Get your connection string from Supabase Dashboard → Settings → Database.
 
 **Important**: Generate strong random secrets for JWT keys!
 

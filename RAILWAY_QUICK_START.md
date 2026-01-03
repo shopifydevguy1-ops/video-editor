@@ -21,7 +21,7 @@
 Go to **Variables** tab, add:
 
 ```env
-DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 JWT_SECRET=change-this-to-a-random-secret-key
 JWT_REFRESH_SECRET=change-this-to-another-random-secret-key
 FRONTEND_URL=https://your-vercel-app.vercel.app

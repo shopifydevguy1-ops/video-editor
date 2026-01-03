@@ -56,7 +56,7 @@ Go to **Variables** tab and add these:
 #### Required Variables:
 
 ```env
-DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 ```
 
 ```env
@@ -239,7 +239,7 @@ railway up
 
 **Minimum Required:**
 ```
-DATABASE_URL=postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 JWT_SECRET=your-secret-key
 JWT_REFRESH_SECRET=your-refresh-secret-key
 FRONTEND_URL=https://your-vercel-app.vercel.app

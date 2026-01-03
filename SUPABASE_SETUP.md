@@ -4,7 +4,7 @@
 
 Your Supabase PostgreSQL connection string:
 ```
-postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres
+postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
 ```
 
 ## Setup Steps
@@ -43,7 +43,7 @@ npm run create-admin
 
 Add to `backend/.env`:
 ```env
-DATABASE_URL="postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"
 ```
 
 ### For Production (Railway/Render)
@@ -68,7 +68,7 @@ Add the same `DATABASE_URL` to your backend deployment platform's environment va
 
 For better performance, use Supabase's connection pooler:
 ```
-postgresql://postgres:Zaizai111720@db.cmvgsisomelrlywnnrcl.supabase.co:6543/postgres
+postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:6543/postgres
 ```
 
 Note: Port `6543` is for connection pooling, `5432` is direct connection.
