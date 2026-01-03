@@ -35,7 +35,7 @@ export class GeneratorService {
     this.openaiApiKey = this.configService.get<string>('OPENAI_API_KEY') || '';
   }
 
-  async generateScript(topic: string): Promise<GeneratedScript> {
+  async generateScript(userId: string, topic: string): Promise<GeneratedScript> {
     if (!this.openaiApiKey) {
       throw new Error('OpenAI API key not configured');
     }
@@ -138,7 +138,7 @@ export class GeneratorService {
     try {
       // 1. Generate script
       this.logger.log(`Generating script for topic: ${topic}`);
-      const script = await this.generateScript(topic);
+      const script = await this.generateScript(userId, topic);
 
       // 2. Break into scenes
       this.logger.log('Breaking script into scenes');
@@ -149,12 +149,12 @@ export class GeneratorService {
       const ttsAudios = await Promise.all(
         scenes.map((scene) =>
           this.ttsService.generateSpeech(
+            userId,
             {
               text: scene.text,
               voiceId: '21m00Tcm4TlvDq8ikWAM', // Default voice
               speed: 1.0,
             },
-            userId,
           ),
         ),
       );

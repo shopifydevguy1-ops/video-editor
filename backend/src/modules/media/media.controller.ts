@@ -11,6 +11,7 @@ import {
   Query,
   Body,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { PexelsService } from './pexels.service';
@@ -28,7 +29,7 @@ export class MediaController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
     @UploadedFile() file: Express.Multer.File,
     @Body('tags') tags?: string,
   ) {
@@ -37,17 +38,17 @@ export class MediaController {
   }
 
   @Get()
-  findAll(@Request() req, @Query('type') type?: MediaType) {
+  findAll(@Request() req: ExpressRequest & { user: { id: string } }, @Query('type') type?: MediaType) {
     return this.mediaService.findAll(req.user.id, type);
   }
 
   @Get(':id')
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(@Request() req: ExpressRequest & { user: { id: string } }, @Param('id') id: string) {
     return this.mediaService.findOne(req.user.id, id);
   }
 
   @Delete(':id')
-  delete(@Request() req, @Param('id') id: string) {
+  delete(@Request() req: ExpressRequest & { user: { id: string } }, @Param('id') id: string) {
     return this.mediaService.delete(req.user.id, id);
   }
 

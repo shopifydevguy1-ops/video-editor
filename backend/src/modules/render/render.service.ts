@@ -39,7 +39,7 @@ export class RenderService {
       throw new Error('Access denied');
     }
 
-    const editorState = project.editorState as EditorState;
+    const editorState = project.editorState as unknown as EditorState;
     const defaultSettings: RenderSettings = {
       resolution: editorState.resolution,
       fps: editorState.fps,
@@ -101,8 +101,8 @@ export class RenderService {
         },
       });
 
-      const editorState = render.project.editorState as EditorState;
-      const settings = render.settings as RenderSettings;
+      const editorState = render.project.editorState as unknown as EditorState;
+      const settings = render.settings as unknown as RenderSettings;
 
       const outputPath = await this.renderVideo(renderId, editorState, settings);
       const outputUrl = await this.uploadVideo(outputPath, renderId);
@@ -281,7 +281,7 @@ export class RenderService {
     // Audio mixing
     if (audioLayers.length > 0) {
       audioLayers.forEach((layer, index) => {
-        const volume = layer.volume || 1;
+        const volume = layer.type === 'audio' ? (layer.volume || 1) : 1;
         filters.push(
           `[${audioIndex + index}:a]volume=${volume},adelay=${layer.startTime * 1000}|${layer.startTime * 1000}[a${index}]`,
         );
@@ -341,7 +341,7 @@ export class RenderService {
       progress: render.progress,
       outputUrl: render.outputUrl || undefined,
       errorMessage: render.errorMessage || undefined,
-      settings: render.settings as RenderSettings,
+      settings: render.settings as unknown as RenderSettings,
       createdAt: render.createdAt,
       startedAt: render.startedAt || undefined,
       completedAt: render.completedAt || undefined,

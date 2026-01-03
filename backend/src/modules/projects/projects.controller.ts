@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -20,23 +21,23 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  create(@Request() req, @Body() createProjectDto: CreateProjectDto) {
+  create(@Request() req: ExpressRequest & { user: { id: string } }, @Body() createProjectDto: CreateProjectDto) {
     return this.projectsService.create(req.user.id, createProjectDto);
   }
 
   @Get()
-  findAll(@Request() req) {
+  findAll(@Request() req: ExpressRequest & { user: { id: string } }) {
     return this.projectsService.findAll(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(@Request() req: ExpressRequest & { user: { id: string } }, @Param('id') id: string) {
     return this.projectsService.findOne(req.user.id, id);
   }
 
   @Patch(':id')
   update(
-    @Request() req,
+    @Request() req: ExpressRequest & { user: { id: string } },
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
@@ -44,7 +45,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  remove(@Request() req, @Param('id') id: string) {
+  remove(@Request() req: ExpressRequest & { user: { id: string } }, @Param('id') id: string) {
     return this.projectsService.remove(req.user.id, id);
   }
 }

@@ -171,11 +171,11 @@ export class MediaService {
               fps: videoStream?.r_frame_rate
                 ? eval(videoStream.r_frame_rate)
                 : undefined,
-              bitrate: metadata.format.bit_rate
-                ? parseInt(metadata.format.bit_rate)
+              bitrate: metadata.format?.bit_rate
+                ? parseInt(String(metadata.format.bit_rate))
                 : undefined,
-              codec: videoStream?.codec_name,
-              format: metadata.format.format_name,
+              codec: videoStream?.codec_name || undefined,
+              format: metadata.format?.format_name || undefined,
               size: file.size,
             });
           });
@@ -215,12 +215,12 @@ export class MediaService {
             );
 
             resolve({
-              duration: metadata.format.duration,
-              bitrate: metadata.format.bit_rate
-                ? parseInt(metadata.format.bit_rate)
+              duration: metadata.format?.duration ? parseFloat(String(metadata.format.duration)) : undefined,
+              bitrate: metadata.format?.bit_rate
+                ? parseInt(String(metadata.format.bit_rate))
                 : undefined,
-              codec: audioStream?.codec_name,
-              format: metadata.format.format_name,
+              codec: audioStream?.codec_name || undefined,
+              format: metadata.format?.format_name || undefined,
               size: file.size,
             });
           });

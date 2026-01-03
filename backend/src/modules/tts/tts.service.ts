@@ -20,8 +20,8 @@ export class TTSService {
   }
 
   async generateSpeech(
+    userId: string,
     request: TTSRequestDto,
-    userId?: string,
   ): Promise<TTSResponse> {
     // Generate cache key
     const cacheKey = this.generateCacheKey(request);
@@ -36,7 +36,7 @@ export class TTSService {
       return {
         audioUrl: cached.audioUrl,
         duration: cached.duration,
-        wordTimestamps: cached.wordTimestamps as WordTimestamp[],
+        wordTimestamps: (cached.wordTimestamps as any) as WordTimestamp[],
         voiceId: cached.voiceId,
         text: request.text,
       };
@@ -170,7 +170,7 @@ export class TTSService {
   private async uploadAudio(
     audioData: Buffer,
     userId: string,
-    request: TTSRequest,
+    request: TTSRequestDto,
   ): Promise<string> {
     // TODO: Implement S3/R2 upload
     // For now, return a placeholder URL

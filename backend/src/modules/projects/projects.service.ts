@@ -41,7 +41,6 @@ export class ProjectsService {
         description: true,
         thumbnailUrl: true,
         editorState: true,
-        aspectRatio: true,
         createdAt: true,
         updatedAt: true,
       },

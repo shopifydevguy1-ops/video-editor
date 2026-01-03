@@ -11,4 +11,5 @@ import { PrismaModule } from '../../prisma/prisma.module';
   providers: [MediaService, StorageService, PexelsService],
   exports: [MediaService, StorageService, PexelsService],
 })
+export class MediaModule {}
 

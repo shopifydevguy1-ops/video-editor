@@ -81,11 +81,15 @@ export class RenderQueueService {
     });
 
     this.renderWorker.on('failed', (job, err) => {
-      this.logger.error(`Render job ${job.id} failed: ${err.message}`);
+      if (job) {
+        this.logger.error(`Render job ${job.id} failed: ${err.message}`);
+      }
     });
 
     this.renderWorker.on('progress', (job, progress) => {
-      this.logger.log(`Render job ${job.id} progress: ${progress}%`);
+      if (job) {
+        this.logger.log(`Render job ${job.id} progress: ${progress}%`);
+      }
     });
   }
 
@@ -126,7 +130,8 @@ export class RenderQueueService {
     }
 
     const state = await job.getState();
-    const progress = (await job.progress()) as number;
+    const progressValue = await job.progress();
+    const progress = typeof progressValue === 'number' ? progressValue : 0;
 
     return {
       status: state,
