@@ -19,6 +19,7 @@ export default function MediaPage() {
 
   useEffect(() => {
     loadMedia();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterType]);
 
   const loadMedia = async () => {

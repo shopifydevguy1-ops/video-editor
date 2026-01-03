@@ -262,7 +262,8 @@ export class RenderService {
         const fontSize = layer.fontSize * (settings.resolution.width / (editorState.resolution.width || 1920));
 
         // Escape text for FFmpeg
-        const escapedText = layer.content
+        const textContent = layer.type === 'text' ? layer.content : '';
+        const escapedText = textContent
           .replace(/\\/g, '\\\\')
           .replace(/:/g, '\\:')
           .replace(/'/g, "\\'");

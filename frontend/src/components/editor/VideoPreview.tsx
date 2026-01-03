@@ -44,14 +44,16 @@ export function VideoPreview() {
       const x = (layer.position?.x || 0) * (canvasWidth / (editorState?.resolution.width || 1920));
       const y = (layer.position?.y || 0) * (canvasHeight / (editorState?.resolution.height || 1080));
       
-      if (layer.backgroundColor) {
-        const metrics = ctx.measureText(layer.content || '');
-        ctx.fillStyle = layer.backgroundColor;
-        ctx.fillRect(x - 5, y - 5, metrics.width + 10, layer.fontSize + 10);
+      if (layer.type === 'text') {
+        if (layer.backgroundColor) {
+          const metrics = ctx.measureText(layer.content || '');
+          ctx.fillStyle = layer.backgroundColor;
+          ctx.fillRect(x - 5, y - 5, metrics.width + 10, layer.fontSize + 10);
+        }
+        
+        ctx.fillStyle = layer.color || '#fff';
+        ctx.fillText(layer.content || '', x, y);
       }
-      
-      ctx.fillStyle = layer.color || '#fff';
-      ctx.fillText(layer.content || '', x, y);
     } else if (layer.type === 'image' && layer.src) {
       const img = imageRefs.current.get(layer.id);
       if (img && img.complete) {

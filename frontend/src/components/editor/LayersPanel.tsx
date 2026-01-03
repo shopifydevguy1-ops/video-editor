@@ -41,7 +41,7 @@ export function LayersPanel() {
       addLayer({
         ...baseLayer,
         type: 'text',
-        content: 'New Text',
+        text: 'New Text',
         fontFamily: 'Arial',
         fontSize: 48,
         fontWeight: 'bold',

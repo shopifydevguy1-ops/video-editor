@@ -26,7 +26,15 @@ const nextConfig = {
     // Allow build to continue with type errors (for now)
     ignoreBuildErrors: false,
   },
+  // For monorepo support
+  webpack: (config, { isServer }) => {
+    // Resolve shared package
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@ai-video-editor/shared': require('path').resolve(__dirname, '../shared/src'),
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
-
