@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String   @map("password_hash")
+  name            String
+  subscriptionTier String  @default("free") @map("subscription_tier")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  projects        Project[]
+  mediaItems      MediaItem[]
+  renders         Render[]
+  ttsCache        TTSCache[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  editorState Json     @map("editor_state") // EditorState from shared types
+  thumbnailUrl String? @map("thumbnail_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  renders Render[]
+
+  @@map("projects")
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  category    String   // viral, explainer, listicle, quote, custom
+  description String?
+  config      Json     // TemplateConfig from shared types
+  previewUrl  String?  @map("preview_url")
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("templates")
+}
+
+model MediaItem {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  type         String   // video, image, audio
+  name         String
+  url          String
+  thumbnailUrl String?  @map("thumbnail_url")
+  metadata     Json     // MediaMetadata from shared types
+  tags         String[]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("media_items")
+}
+
+model Render {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  userId      String   @map("user_id")
+  status      String   @default("pending") // pending, queued, processing, completed, failed
+  progress    Int      @default(0) // 0-100
+  outputUrl   String?  @map("output_url")
+  errorMessage String? @map("error_message")
+  settings    Json     // RenderSettings from shared types
+  createdAt   DateTime @default(now()) @map("created_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@map("renders")
+}
+
+model TTSCache {
+  id             String   @id @default(uuid())
+  userId         String?  @map("user_id") // nullable for global cache
+  textHash       String   @unique @map("text_hash") // SHA-256 hash
+  voiceId        String   @map("voice_id")
+  audioUrl       String   @map("audio_url")
+  duration       Float
+  wordTimestamps Json     @map("word_timestamps")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([textHash])
+  @@index([userId])
+  @@map("tts_cache")
+}
+
