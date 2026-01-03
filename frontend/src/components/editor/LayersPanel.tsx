@@ -50,16 +50,28 @@ export function LayersPanel() {
         alignment: 'center',
         animation: 'none',
       } as any);
-    } else if (type === 'video' || type === 'image') {
+    } else if (type === 'video') {
       addLayer({
         ...baseLayer,
-        type,
+        type: 'video',
+        mediaId: '',
+        src: '',
+        trimStart: 0,
+        trimEnd: 0,
+        position: { x: 0, y: 0 },
+        scale: 1,
+        rotation: 0,
+      } as any);
+    } else if (type === 'image') {
+      addLayer({
+        ...baseLayer,
+        type: 'image',
         mediaId: '',
         src: '',
         position: { x: 0, y: 0 },
         scale: 1,
         rotation: 0,
-      });
+      } as any);
     } else if (type === 'audio') {
       addLayer({
         ...baseLayer,
@@ -69,7 +81,7 @@ export function LayersPanel() {
         trimStart: 0,
         trimEnd: 0,
         volume: 1,
-      });
+      } as any);
     }
 
     setShowAddMenu(false);
