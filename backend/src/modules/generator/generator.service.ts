@@ -14,7 +14,7 @@ interface Scene {
   keywords: string[];
 }
 
-interface GeneratedScript {
+export interface GeneratedScript {
   hook: string;
   mainContent: string[];
   cta: string;
