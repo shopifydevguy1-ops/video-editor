@@ -41,7 +41,7 @@ export function LayersPanel() {
       addLayer({
         ...baseLayer,
         type: 'text',
-        text: 'New Text',
+        content: 'New Text',
         fontFamily: 'Arial',
         fontSize: 48,
         fontWeight: 'bold',
@@ -49,7 +49,7 @@ export function LayersPanel() {
         position: { x: 100, y: 100 },
         alignment: 'center',
         animation: 'none',
-      });
+      } as any);
     } else if (type === 'video' || type === 'image') {
       addLayer({
         ...baseLayer,
